@@ -1,6 +1,6 @@
 # snap-browser
 
-A [Claude Plugin](https://claude.com/plugins) plugin that captures focused screenshots of specific UI components from a running browser — with a red rectangle marking the exact element — and uses them for visual analysis and debugging.
+A [Claude Plugin](https://claude.com/plugins) that captures focused screenshots of specific UI components from a running browser — with a red rectangle marking the exact element — and uses them for visual analysis and debugging.
 
 ```
 /snap-browser:snap the submit button is in the wrong place
