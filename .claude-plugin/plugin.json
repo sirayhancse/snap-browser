@@ -1,0 +1,9 @@
+{
+  "name": "snap-browser",
+  "description": "Capture focused screenshots of specific browser UI components for visual analysis and debugging in Claude Code",
+  "author": {
+    "name": "Saiful Rayhan",
+    "email": "hello@saiful.engineer"
+  },
+  "version": "1.0.0"
+}
