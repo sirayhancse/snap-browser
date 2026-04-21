@@ -1,0 +1,16 @@
+{
+  "name": "snap-browser-skill",
+  "version": "1.0.0",
+  "description": "Headless browser element screenshot tool for the snap-browser Claude Code plugin",
+  "main": "scripts/snap.js",
+  "private": true,
+  "keywords": ["claude-code", "claude-plugin", "playwright", "screenshot", "ui-debug"],
+  "author": "Saiful Rayhan <hello@saiful.engineer> (https://github.com/sirayhancse)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "playwright-core": "^1.48.0"
+  }
+}

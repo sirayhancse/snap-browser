@@ -1,9 +1,23 @@
 {
   "name": "snap-browser",
+  "version": "1.0.0",
   "description": "Capture focused screenshots of specific browser UI components for visual analysis and debugging in Claude Code",
   "author": {
     "name": "Saiful Rayhan",
-    "email": "hello@saiful.engineer"
+    "email": "hello@saiful.engineer",
+    "url": "https://github.com/sirayhancse"
   },
-  "version": "1.0.0"
+  "homepage": "https://github.com/sirayhancse/snap-browser",
+  "repository": "https://github.com/sirayhancse/snap-browser",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "claude-plugin",
+    "screenshot",
+    "browser",
+    "playwright",
+    "ui-debug",
+    "visual-testing"
+  ],
+  "category": "development"
 }

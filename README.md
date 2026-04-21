@@ -1,11 +1,11 @@
 # snap-browser
 
-A Claude Code skill that captures focused screenshots of specific UI components from a running browser — with a red rectangle marking the exact element — and uses them for visual analysis and debugging.
+A [Claude Code](https://docs.claude.com/en/docs/claude-code) plugin that captures focused screenshots of specific UI components from a running browser — with a red rectangle marking the exact element — and uses them for visual analysis and debugging.
 
 ```
-/snap-browser the submit button is in the wrong place
-/snap-browser the certificate card under education looks broken
-/snap-browser show me the skills section
+/snap-browser:snap the submit button is in the wrong place
+/snap-browser:snap the certificate card under education looks broken
+/snap-browser:snap show me the skills section
 ```
 
 ---
@@ -27,113 +27,108 @@ A Claude Code skill that captures focused screenshots of specific UI components 
 
 - **Node.js 18+** — check with `node --version`
 - **Chrome, Chromium, Brave, or Edge** installed on your machine (used for headless rendering — no download required)
-- **Claude Code CLI** — [install guide](https://docs.anthropic.com/en/docs/claude-code)
+- **Claude Code CLI** — [install guide](https://docs.claude.com/en/docs/claude-code)
 
 ---
 
 ## Installation
 
-There are two ways to install: **global** (available in every project) or **per-project**.
+This plugin is distributed as a [Claude Code marketplace](https://docs.claude.com/en/docs/claude-code/plugins). You install it using the official `/plugin` command — never by editing config files by hand.
 
-### Option A — Global install (recommended)
+Claude Code supports three install scopes:
 
-This puts the skill in your Claude config folder so it's available everywhere.
+| Scope | Where it writes | When to use |
+|---|---|---|
+| **user** *(default)* | `~/.claude/settings.json` | You, on your machine, across every project |
+| **project** | `<project>/.claude/settings.json` | Shared with your team via git commit |
+| **local** | `<project>/.claude/settings.local.json` | Just for you in one project, gitignored |
 
-**Step 1: Clone the repo**
+### Step 1 — Add the marketplace (one-time, per machine)
+
+Inside Claude Code:
+
+```
+/plugin marketplace add sirayhancse/snap-browser
+```
+
+
+Or via CLI:
 
 ```bash
-git clone https://github.com/your-username/snap-browser.git ~/.claude/plugins/snap-browser
+claude plugin marketplace add sirayhancse/snap-browser
 ```
 
-> Or anywhere you prefer — the path you use here is what you'll register below.
+This registers the repo as a plugin marketplace — it does **not** enable the plugin yet.
 
-**Step 2: Install dependencies**
+### Step 2 — Install the plugin
+
+#### Option A: User-level (recommended) — available in every project
+
+```
+/plugin install snap-browser@snap-browser
+```
+
+Or CLI:
 
 ```bash
-cd ~/.claude/plugins/snap-browser/skills/snap-browser
-npm install
+claude plugin install snap-browser@snap-browser
 ```
 
-**Step 3: Register the plugin**
+#### Option B: Project-level — shared with your team
 
-Open `~/.claude/plugins/installed_plugins.json` in any editor and add the entry below inside the `"plugins"` object:
+From inside the project root:
 
-```json
-"snap-browser@local": [
-  {
-    "scope": "user",
-    "installPath": "/Users/YOUR_USERNAME/.claude/plugins/snap-browser",
-    "version": "1.0.0",
-    "installedAt": "2026-01-01T00:00:00.000Z",
-    "lastUpdated": "2026-01-01T00:00:00.000Z"
-  }
-]
+```
+/plugin install snap-browser@snap-browser --scope project
 ```
 
-Replace `/Users/YOUR_USERNAME/.claude/plugins/snap-browser` with the **absolute path** where you cloned the repo.
-
-**Step 4: Restart Claude Code**
-
-Close and reopen Claude Code (or the IDE extension). The `/snap-browser` command is now available in every project.
-
----
-
-### Option B — Per-project install
-
-This puts the skill inside one project's `.claude` folder — useful if you want to version-control it with the project.
-
-**Step 1: Clone into your project**
+Or CLI:
 
 ```bash
-cd /path/to/your-project
-git clone https://github.com/your-username/snap-browser.git .claude/snap-browser
+claude plugin install snap-browser@snap-browser --scope project
 ```
 
-**Step 2: Install dependencies**
+This writes to `.claude/settings.json` in your repo. Commit that file so teammates get the plugin when they pull.
+
+#### Option C: Local-only — just you, one project
+
+```
+/plugin install snap-browser@snap-browser --scope local
+```
+
+Writes to `.claude/settings.local.json` (already gitignored by Claude Code).
+
+> **Syntax note:** `snap-browser@snap-browser` is `<plugin-name>@<marketplace-name>`. Both happen to be `snap-browser` because this repo hosts a single-plugin marketplace of the same name.
+
+### Step 3 — Install the script's dependencies
+
+The plugin ships a small Node.js capture script. Run this once after install:
 
 ```bash
-cd .claude/snap-browser/skills/snap-browser && npm install
+# Claude Code will tell you the exact plugin path when you run /plugin list,
+# or you can ask Claude to run this for you:
+cd "$(claude plugin path snap-browser)/skills/snap" && npm install
 ```
 
-**Step 3: Register the plugin**
+Or simply invoke the skill once — Claude will prompt you to run `npm install` when the script first fails.
 
-Add to `~/.claude/plugins/installed_plugins.json`:
+### Step 4 — Verify
 
-```json
-"snap-browser@local": [
-  {
-    "scope": "user",
-    "installPath": "/path/to/your-project/.claude/snap-browser",
-    "version": "1.0.0",
-    "installedAt": "2026-01-01T00:00:00.000Z",
-    "lastUpdated": "2026-01-01T00:00:00.000Z"
-  }
-]
+In Claude Code:
+
+```
+/plugin list
 ```
 
-**Step 4: Restart Claude Code**
+You should see `snap-browser` listed as enabled. Try it:
 
----
-
-### What `installed_plugins.json` looks like after adding snap-browser
-
-```json
-{
-  "version": 2,
-  "plugins": {
-    "some-other-plugin@claude-plugins-official": [ { ... } ],
-    "snap-browser@local": [
-      {
-        "scope": "user",
-        "installPath": "/Users/yourname/.claude/plugins/snap-browser",
-        "version": "1.0.0",
-        "installedAt": "2026-01-01T00:00:00.000Z",
-        "lastUpdated": "2026-01-01T00:00:00.000Z"
-      }
-    ]
-  }
-}
 ```
+/snap-browser:snap show me the header
+```
+
+### Browsing / interactive install
+
+You can also run `/plugin` (no arguments) to open the interactive plugin browser. Press **Tab** to cycle between the **Discover**, **Installed**, **Marketplaces**, and **Errors** tabs.
 
 ---
 
@@ -142,18 +137,20 @@ Add to `~/.claude/plugins/installed_plugins.json`:
 ### Slash command (inside Claude Code)
 
 ```
-/snap-browser <describe the element and/or the issue>
+/snap-browser:snap <describe the element and/or the issue>
 ```
+
+The format is `/<plugin-name>:<skill-name>` — every plugin-provided skill is namespaced.
 
 Examples:
 
 ```
-/snap-browser the submit button is in the wrong place
-/snap-browser the certificate card under education looks broken
-/snap-browser show me the skills section
-/snap-browser the name input field has bad styling
-/snap-browser take a full screenshot of the dashboard
-/snap-browser the navigation bar is overlapping the content
+/snap-browser:snap the submit button is in the wrong place
+/snap-browser:snap the certificate card under education looks broken
+/snap-browser:snap show me the skills section
+/snap-browser:snap the name input field has bad styling
+/snap-browser:snap take a full screenshot of the dashboard
+/snap-browser:snap the navigation bar is overlapping the content
 ```
 
 Claude will:
@@ -163,19 +160,21 @@ Claude will:
 - Show you both the tight crop and the red-rectangle context shot
 - Diagnose the visual issue and suggest or apply a fix
 
-### Direct script usage
+> **Tip:** Because the skill's `description` is rich, Claude will often auto-invoke it when you describe a UI problem in plain English — you don't always need to type the slash prefix.
+
+### Direct script usage (outside Claude Code)
 
 You can also call the script directly from any terminal:
 
 ```bash
 # Auto-detect URL from open browser or running dev server
-node /path/to/snap-browser/skills/snap-browser/scripts/snap.js "submit button"
+node /path/to/snap-browser/skills/snap/scripts/snap.js "submit button"
 
 # Specific element on a specific page
-node /path/to/snap-browser/skills/snap-browser/scripts/snap.js "submit button" "http://localhost:3000/checkout"
+node /path/to/snap-browser/skills/snap/scripts/snap.js "submit button" "http://localhost:3000/checkout"
 
 # Full page (use for "show me the whole page" or when element is below the fold)
-node /path/to/snap-browser/skills/snap-browser/scripts/snap.js --full-page "http://localhost:3000/dashboard"
+node /path/to/snap-browser/skills/snap/scripts/snap.js --full-page "http://localhost:3000/dashboard"
 ```
 
 **Output JSON:**
@@ -222,8 +221,9 @@ node /path/to/snap-browser/skills/snap-browser/scripts/snap.js --full-page "http
 The script uses your system-installed Chrome/Chromium — no separate download. Supports: Google Chrome, Chromium, Brave, Microsoft Edge.
 
 If none are installed, run:
+
 ```bash
-cd /path/to/snap-browser/skills/snap-browser && npx playwright install chromium
+cd "$(claude plugin path snap-browser)/skills/snap" && npx playwright install chromium
 ```
 
 ---
@@ -233,9 +233,10 @@ cd /path/to/snap-browser/skills/snap-browser && npx playwright install chromium
 ```
 snap-browser/
 ├── .claude-plugin/
-│   └── plugin.json          ← Claude Code plugin metadata
+│   ├── plugin.json          ← Plugin manifest
+│   └── marketplace.json     ← Marketplace manifest (lets this repo be added via /plugin marketplace add)
 ├── skills/
-│   └── snap-browser/
+│   └── snap/
 │       ├── SKILL.md          ← Skill definition & Claude workflow instructions
 │       ├── package.json      ← Dependencies (playwright-core only)
 │       └── scripts/
@@ -249,11 +250,14 @@ snap-browser/
 
 ## Troubleshooting
 
+**`/snap-browser:snap` is not recognized**
+Run `/plugin list` to confirm the plugin is installed and enabled. If not, re-run Step 2 of the installation. If it is listed but not firing, run `/plugin reload` (or restart Claude Code).
+
 **"No page URL found"**
-Open your app in Chrome/Brave/Edge/Arc/Safari, or start your dev server, or pass the URL directly: `node /path/to/snap-browser/skills/snap-browser/scripts/snap.js "element" "http://localhost:3000/page"`
+Open your app in Chrome/Brave/Edge/Arc/Safari, or start your dev server, or pass the URL directly.
 
 **"Could not launch headless browser"**
-Install Google Chrome or Chromium, or run `npx playwright install chromium` inside the repo.
+Install Google Chrome or Chromium, or run `npx playwright install chromium` inside `skills/snap/`.
 
 **Element not found (mode: viewport)**
 The element may be hidden, inside an accordion/tab, or below the fold. Re-run with `--full-page`, or make the description match the visible label text more exactly.
@@ -265,12 +269,11 @@ Add more context: `"submit button in the checkout form"` instead of `"submit but
 The headless browser has no cookies. Pass the login page URL, or test on a page that doesn't need auth.
 
 **Linux: `env: 'which': No such file or directory`**
+
 ```bash
 sudo apt install debianutils   # Debian/Ubuntu
 sudo dnf install which          # Fedora/RHEL
 ```
-
----
 
 ## License
 

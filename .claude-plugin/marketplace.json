@@ -1,0 +1,18 @@
+{
+  "name": "snap-browser",
+  "owner": {
+    "name": "Saiful Rayhan",
+    "email": "hello@saiful.engineer",
+    "url": "https://github.com/sirayhancse"
+  },
+  "plugins": [
+    {
+      "name": "snap-browser",
+      "source": "./",
+      "description": "Capture focused screenshots of specific browser UI components for visual analysis and debugging",
+      "version": "1.0.0",
+      "category": "development",
+      "keywords": ["screenshot", "browser", "playwright", "ui-debug"]
+    }
+  ]
+}

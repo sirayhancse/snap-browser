@@ -1,6 +1,6 @@
 ---
-name: snap-browser
-description: Captures a focused screenshot of a specific UI component from a running browser and uses it for visual analysis and debugging. Works with Chrome, Firefox, Safari, Arc, Brave — no browser setup needed. Use this skill IMMEDIATELY whenever the user mentions a UI element that looks broken, misaligned, or needs visual inspection — even if they don't explicitly say "screenshot". Trigger on: "/snap-browser", "the submit button is wrong", "fix the UI of [element]", "take a screenshot of [element]", "show me the [component]", "the [element] is broken/misplaced", "take screenshot if needed", or any request combining a UI element with a visual problem.
+name: snap
+description: Captures a focused screenshot of a specific UI component from a running browser and uses it for visual analysis and debugging. Works with Chrome, Firefox, Safari, Arc, Brave — no browser setup needed. Use this skill IMMEDIATELY whenever the user mentions a UI element that looks broken, misaligned, or needs visual inspection — even if they don't explicitly say "screenshot". Trigger on: "/snap-browser:snap", "the submit button is wrong", "fix the UI of [element]", "take a screenshot of [element]", "show me the [component]", "the [element] is broken/misplaced", "take screenshot if needed", or any request combining a UI element with a visual problem.
 argument-hint: <describe the UI element and/or issue>
 ---
 
@@ -13,20 +13,13 @@ This skill captures focused screenshots of specific browser UI components for vi
 
 ## Setup (one-time, per machine)
 
-**1. Find the plugin root** — this is the directory you cloned or registered:
+The plugin ships with a Node.js capture script. Dependencies must be installed once:
 
 ```bash
-# Check your registered install path:
-cat ~/.claude/plugins/installed_plugins.json | grep -A3 "snap-browser"
+cd "${CLAUDE_PLUGIN_ROOT}/skills/snap" && npm install
 ```
 
-**2. Install dependencies** (only needed once):
-
-```bash
-cd <plugin-root>/skills/snap-browser && npm install
-```
-
-The snap script is at `<plugin-root>/skills/snap-browser/scripts/snap.js`.
+`${CLAUDE_PLUGIN_ROOT}` is an environment variable injected by Claude Code that resolves to this plugin's install directory — you never need to hard-code a path.
 
 ## Workflow
 
@@ -37,12 +30,8 @@ From `$ARGUMENTS` extract:
 - **Page context**: where it lives (e.g., "under education", "on settings page", "in dashboard")
 - **Issue**: what's wrong (e.g., "wrong position", "broken", "cut off")
 
-### Step 2 — Find the plugin root and infer the page URL
+### Step 2 — Infer the page URL
 
-**Find plugin root:**
-Read `~/.claude/plugins/installed_plugins.json`, locate the `snap-browser@local` entry, and use its `installPath`. The script is at `<installPath>/skills/snap-browser/scripts/snap.js`.
-
-**Find the page URL:**
 Look at the codebase router files to find the exact route:
 - `src/App.tsx`, `src/router.ts`, `src/routes/` — React Router / TanStack Router
 - `app/**/page.tsx` — Next.js App Router
@@ -52,6 +41,7 @@ Look at the codebase router files to find the exact route:
 Build the full URL: `http://localhost:<port><path>`
 
 Check which port is running:
+
 ```bash
 curl -s http://localhost:3000/ > /dev/null && echo "3000" || curl -s http://localhost:5173/ > /dev/null && echo "5173"
 ```
@@ -60,15 +50,17 @@ If the URL can't be inferred, omit it — the script auto-detects from the open 
 
 ### Step 3 — Run the capture script
 
+Always invoke the script via `${CLAUDE_PLUGIN_ROOT}`:
+
 ```bash
 # Specific element on a specific page (preferred):
-node <installPath>/skills/snap-browser/scripts/snap.js "<element description>" "<page url>"
+node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" "<element description>" "<page url>"
 
 # Auto-detect URL from open browser or running dev server:
-node <installPath>/skills/snap-browser/scripts/snap.js "<element description>"
+node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" "<element description>"
 
-# Full page only when user says "show me the whole page" or element is below the fold:
-node <installPath>/skills/snap-browser/scripts/snap.js --full-page "<page url>"
+# Full page only when the user says "show me the whole page" or element is below the fold:
+node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" --full-page "<page url>"
 ```
 
 Parse the JSON output for `path` and `contextPath`.
@@ -90,7 +82,7 @@ Read **both** `path` and `contextPath` (when `mode: "element"`). Analyze:
 
 ### Step 5 — Fix
 
-Find the component file in the codebase and apply the fix. Optionally re-run snap.js to confirm the fix looks correct.
+Find the component file in the codebase and apply the fix. Optionally re-run the script to confirm the fix looks correct.
 
 ## How smart container expansion works
 
@@ -104,20 +96,20 @@ When the locator matches a small or inline node (e.g., an `<h3>Skills</h3>` head
 
 ## Example invocations
 
-**`/snap-browser the submit button is in the wrong place`**
-→ element: "submit button" → find route → `node <installPath>/skills/snap-browser/scripts/snap.js "submit button" "http://localhost:3000/checkout"`
+**`/snap-browser:snap the submit button is in the wrong place`**
+→ element: "submit button" → find route → `node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" "submit button" "http://localhost:3000/checkout"`
 → tight button crop + red rectangle context → identify CSS issue → fix
 
-**`/snap-browser the certificate card under education looks broken`**
+**`/snap-browser:snap the certificate card under education looks broken`**
 → element: "certificate card", page: education route
-→ check router → `node <installPath>/skills/snap-browser/scripts/snap.js "certificate card" "http://localhost:3000/education/certificates"`
+→ check router → `node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" "certificate card" "http://localhost:3000/education/certificates"`
 → crop expands from card title to full card → find broken style → fix
 
-**`/snap-browser show me the login form`**
-→ `node <installPath>/skills/snap-browser/scripts/snap.js "login form" "http://localhost:3000/login"` → full form captured
+**`/snap-browser:snap show me the login form`**
+→ `node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" "login form" "http://localhost:3000/login"` → full form captured
 
-**`/snap-browser take a full screenshot of the dashboard`**
-→ `node <installPath>/skills/snap-browser/scripts/snap.js --full-page "http://localhost:3000/dashboard"` → full scrollable page
+**`/snap-browser:snap take a full screenshot of the dashboard`**
+→ `node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" --full-page "http://localhost:3000/dashboard"` → full scrollable page
 
 ## Tips
 
