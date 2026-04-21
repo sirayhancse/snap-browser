@@ -43,22 +43,38 @@ Claude Code supports three install scopes:
 | **project** | `<project>/.claude/settings.json` | Shared with your team via git commit |
 | **local** | `<project>/.claude/settings.local.json` | Just for you in one project, gitignored |
 
-### Step 1 — Add the marketplace (one-time, per machine)
+### Step 1 — Add the GitHub repo as a marketplace (one-time, per machine)
 
-Inside Claude Code:
+Claude Code can treat any public GitHub repo that contains a `.claude-plugin/marketplace.json` as a plugin marketplace. This repo does — so you can point Claude Code straight at GitHub, no cloning required.
+
+Inside Claude Code, use **any** of these three forms:
 
 ```
+# A. GitHub owner/repo shorthand (recommended)
 /plugin marketplace add sirayhancse/snap-browser
+
+# B. Full HTTPS URL to the repo
+/plugin marketplace add https://github.com/sirayhancse/snap-browser
+
+# C. Full git URL (works for private repos you have SSH access to)
+/plugin marketplace add git@github.com:sirayhancse/snap-browser.git
 ```
 
-
-Or via CLI:
+CLI equivalent (any of the above also works as a flag to `claude plugin marketplace add`):
 
 ```bash
 claude plugin marketplace add sirayhancse/snap-browser
+# or
+claude plugin marketplace add https://github.com/sirayhancse/snap-browser
 ```
 
-This registers the repo as a plugin marketplace — it does **not** enable the plugin yet.
+Claude Code fetches and caches the repo locally, reads `.claude-plugin/marketplace.json`, and registers `snap-browser` as an available marketplace. It does **not** enable the plugin yet — that happens in Step 2.
+
+> **Pinning a version.** To lock to a specific release or commit, append `@<ref>`:
+> `/plugin marketplace add sirayhancse/snap-browser@v1.0.0`
+> (works with tags, branches, or full commit SHAs)
+
+> **Updating later.** Run `/plugin marketplace update snap-browser` to pull the latest version.
 
 ### Step 2 — Install the plugin
 
@@ -132,6 +148,87 @@ You can also run `/plugin` (no arguments) to open the interactive plugin browser
 
 ---
 
+## Manual install from GitHub (offline / hack-on-it)
+
+Prefer this if you want to clone the repo yourself — to read the source, modify it, or use it without Claude Code fetching from GitHub on its own.
+
+### Step 1 — Clone the repo
+
+Pick any location on disk. A few common choices:
+
+```bash
+# Option A: user-level location (available across every project)
+git clone https://github.com/sirayhancse/snap-browser.git ~/.claude/plugins/snap-browser
+
+# Option B: inside a specific project (so the plugin travels with the repo)
+cd /path/to/your-project
+git clone https://github.com/sirayhancse/snap-browser.git .claude/plugins/snap-browser
+```
+
+The path doesn't matter — Claude Code only needs an absolute path in the next step.
+
+### Step 2 — Install the script's dependencies
+
+```bash
+cd <clone-path>/skills/snap && npm install
+```
+
+### Step 3 — Register the clone as a local marketplace
+
+`/plugin marketplace add` accepts a **local directory** (not just a GitHub URL) as long as the directory contains `.claude-plugin/marketplace.json` — which this repo does.
+
+Inside Claude Code:
+
+```
+/plugin marketplace add <absolute-path-to-clone>
+```
+
+Example:
+
+```
+/plugin marketplace add /Users/you/.claude/plugins/snap-browser
+```
+
+Or CLI:
+
+```bash
+claude plugin marketplace add ~/.claude/plugins/snap-browser
+```
+
+### Step 4 — Install the plugin
+
+Same as the marketplace flow — pick a scope:
+
+```
+/plugin install snap-browser@snap-browser                  # user (default)
+/plugin install snap-browser@snap-browser --scope project  # shared with team
+/plugin install snap-browser@snap-browser --scope local    # just you, one project
+```
+
+### Step 5 — Verify
+
+```
+/plugin list
+```
+
+You should see `snap-browser` listed. Try it:
+
+```
+/snap-browser:snap show me the header
+```
+
+### Updating a manually-cloned install
+
+```bash
+cd <clone-path>
+git pull
+cd skills/snap && npm install   # only if dependencies changed
+```
+
+Then `/plugin reload` inside Claude Code. No need to re-register the marketplace.
+
+---
+
 ## Usage
 
 ### Slash command (inside Claude Code)
@@ -173,7 +270,10 @@ node /path/to/snap-browser/skills/snap/scripts/snap.js "submit button"
 # Specific element on a specific page
 node /path/to/snap-browser/skills/snap/scripts/snap.js "submit button" "http://localhost:3000/checkout"
 
-# Full page (use for "show me the whole page" or when element is below the fold)
+# Full page with the element highlighted (element may be below the fold)
+node /path/to/snap-browser/skills/snap/scripts/snap.js --full-page "submit button" "http://localhost:3000/checkout"
+
+# Full page, no specific element
 node /path/to/snap-browser/skills/snap/scripts/snap.js --full-page "http://localhost:3000/dashboard"
 ```
 

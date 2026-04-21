@@ -337,6 +337,34 @@ async function addHighlight(page, box) {
   }, box);
 }
 
+// Absolute-positioned variant for full-page screenshots.
+// position:fixed is pinned to the viewport and would only render correctly at
+// the initial scroll position when Playwright stitches a full-page image — so
+// for full-page mode we anchor the highlight to page (pageX/pageY) coordinates.
+async function addHighlightAbsolute(page, box) {
+  await page.evaluate(({ pageX, pageY, width, height }) => {
+    const old = document.getElementById('__snap_hl__');
+    if (old) old.remove();
+    const hl = document.createElement('div');
+    hl.id = '__snap_hl__';
+    Object.assign(hl.style, {
+      position:      'absolute',
+      left:          `${pageX}px`,
+      top:           `${pageY}px`,
+      width:         `${width}px`,
+      height:        `${height}px`,
+      border:        '3px solid red',
+      borderRadius:  '3px',
+      boxSizing:     'border-box',
+      background:    'rgba(255, 0, 0, 0.10)',
+      pointerEvents: 'none',
+      zIndex:        '2147483647',
+      boxShadow:     '0 0 0 2px rgba(255,255,255,0.7), 0 0 8px rgba(255,0,0,0.4)',
+    });
+    document.body.appendChild(hl);
+  }, box);
+}
+
 async function removeHighlight(page) {
   await page.evaluate(() => {
     const el = document.getElementById('__snap_hl__');
@@ -406,6 +434,41 @@ async function main() {
     // ── Full-page mode ──────────────────────────────────────────────────────
     if (fullPage) {
       const outPath = path.join(tmpDir, `snap-fullpage-${ts}.png`);
+
+      // With a description: try to locate and highlight the element on the full page.
+      if (description) {
+        const found = await findElement(page, description);
+        if (found) {
+          const box = await getComponentBox(page, found.locator);
+          await addHighlightAbsolute(page, box);
+          await page.screenshot({ path: outPath, fullPage: true });
+          await removeHighlight(page);
+          console.log(JSON.stringify({
+            success:     true,
+            path:        outPath,
+            mode:        'fullpage',
+            expanded:    box.expanded,
+            strategy:    found.strategy,
+            pageUrl,
+            urlSource,
+            boundingBox: { x: box.pageX, y: box.pageY, width: box.width, height: box.height },
+          }));
+          return;
+        }
+        // Element not found — still return the full page, but flag it.
+        await page.screenshot({ path: outPath, fullPage: true });
+        console.log(JSON.stringify({
+          success: true,
+          path:    outPath,
+          mode:    'fullpage',
+          pageUrl,
+          urlSource,
+          message: `"${description}" not found via locators. Captured full page without highlight.`,
+        }));
+        return;
+      }
+
+      // No description — plain full-page capture.
       await page.screenshot({ path: outPath, fullPage: true });
       console.log(JSON.stringify({ success: true, path: outPath, mode: 'fullpage', pageUrl, urlSource }));
       return;

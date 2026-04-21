@@ -59,7 +59,10 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" "<element description>"
 # Auto-detect URL from open browser or running dev server:
 node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" "<element description>"
 
-# Full page only when the user says "show me the whole page" or element is below the fold:
+# Full page with the element highlighted (use when the element may be below the fold):
+node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" --full-page "<element description>" "<page url>"
+
+# Full page, no specific element (use when the user says "show me the whole page"):
 node "${CLAUDE_PLUGIN_ROOT}/skills/snap/scripts/snap.js" --full-page "<page url>"
 ```
 
@@ -71,7 +74,7 @@ Parse the JSON output for `path` and `contextPath`.
 |------|---------|
 | `element` | Found. `path` = tight crop, `contextPath` = viewport with red rectangle. `expanded: true` means the crop was widened to the parent container. Read **both** images. |
 | `viewport` | Not found by locator. `path` = visible viewport. Identify visually, or re-run with `--full-page`. |
-| `fullpage` | `--full-page` was passed. `path` = full scrollable page. |
+| `fullpage` | `--full-page` was passed. `path` = full scrollable page. If a description was also passed and the element was located, the full page includes a red rectangle around it (`boundingBox`, `expanded`, `strategy` are returned). |
 
 ### Step 4 — Read and analyze
 
